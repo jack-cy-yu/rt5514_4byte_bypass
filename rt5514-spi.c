@@ -29,7 +29,7 @@
 #include "rt5514.h"
 #include "rt5514-spi.h"
 
-#define RECORD_SHIFT  256000
+#define RECORD_SHIFT  (256000-64)
 
 static atomic_t is_spi_ready = ATOMIC_INIT(0);
 
