@@ -29,7 +29,7 @@
 #include "rt5514.h"
 #include "rt5514-spi.h"
 
-#define RECORD_SHIFT  (256000-64)
+#define RECORD_SHIFT  (0)
 
 static atomic_t is_spi_ready = ATOMIC_INIT(0);
 
@@ -240,7 +240,7 @@ static void rt5514_spi_copy_work(struct work_struct *work)
 	runtime = rt5514_dsp->substream->runtime;
 	period_bytes = snd_pcm_lib_period_bytes(rt5514_dsp->substream);
 
-	if (rt5514_dsp->get_size >= rt5514_dsp->buf_size) {
+	// if (rt5514_dsp->get_size >= rt5514_dsp->buf_size) {
 		rt5514_spi_burst_read(RT5514_BUFFER_VOICE_WP, (u8 *)&buf,
 			sizeof(buf));
 		cur_wp = buf[0] | buf[1] << 8 | buf[2] << 16 |
@@ -258,7 +258,7 @@ static void rt5514_spi_copy_work(struct work_struct *work)
 				cal_copy_delay(rt5514_dsp, remain_data));
 			goto done;
 		}
-	}
+	// }
 
 	if (rt5514_dsp->buf_rp + period_bytes <= rt5514_dsp->buf_limit) {
 		rt5514_spi_burst_read(rt5514_dsp->buf_rp,
@@ -592,6 +592,21 @@ static int rt5514_spi_hw_free(struct snd_pcm_substream *substream)
 	return snd_pcm_lib_free_vmalloc_buffer(substream);
 }
 
+static int rt5514_spi_trigger(struct snd_pcm_substream *substream, int cmd)
+{
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct rt5514_dsp *rt5514_dsp =
+			snd_soc_platform_get_drvdata(rtd->platform);
+	rt5514_dsp = rt5514_dsp_glb;
+
+	if (cmd == SNDRV_PCM_TRIGGER_START) {
+		schedule_delayed_work(&rt5514_dsp->start_work,
+			msecs_to_jiffies(0));
+	}
+
+	return 0;
+}
+
 static snd_pcm_uframes_t rt5514_spi_pcm_pointer(
 		struct snd_pcm_substream *substream)
 {
@@ -607,6 +622,7 @@ static const struct snd_pcm_ops rt5514_spi_pcm_ops = {
 	.open		= rt5514_spi_pcm_open,
 	.hw_params	= rt5514_spi_hw_params,
 	.hw_free	= rt5514_spi_hw_free,
+    .trigger	= rt5514_spi_trigger,
 	.pointer	= rt5514_spi_pcm_pointer,
 	.mmap		= snd_pcm_lib_mmap_vmalloc,
 	.page		= snd_pcm_lib_get_vmalloc_page,
