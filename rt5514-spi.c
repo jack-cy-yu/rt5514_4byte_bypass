@@ -597,7 +597,6 @@ static int rt5514_spi_trigger(struct snd_pcm_substream *substream, int cmd)
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct rt5514_dsp *rt5514_dsp =
 			snd_soc_platform_get_drvdata(rtd->platform);
-	rt5514_dsp = rt5514_dsp_glb;
 
 	if (cmd == SNDRV_PCM_TRIGGER_START) {
 		schedule_delayed_work(&rt5514_dsp->start_work,
